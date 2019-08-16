@@ -57,11 +57,10 @@ func line(start, end pos) (point []pos){
         return
 }
 
-func linePut(start, end pos, terrain map[pos]entity) []entity{
+func linePut(start, end pos, collision map[pos]*entity) {
 	point := line(start, end)
 	for i := range(point) {
-		terrain[(point[i])].ch = '#'
-		terrain[(point[i])].f = "solid"
+		collision[(point[i])].ch = '#'
+		collision[(point[i])].tags = "solid"
 	}
-	return terrain
 }

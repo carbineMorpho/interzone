@@ -1,12 +1,16 @@
 package main
 
+import(
+	"strings"
+)
+
 type entity struct{
         ch rune
         p pos
         hp int
         atk int
 	goal pos
-	f string // type descriptor [space, solid, entity]
+	tags string // "space:solid:entity:player:entity"
 }
 
 func (e *entity) Attack(victim *entity ) {
@@ -24,12 +28,12 @@ func (e *entity) Move(vector pos, collision map[pos]*entity) {
 
         collide, prs := collision[pos{x,y}]
         if prs != false {
-                switch collide.f {
-                case "solid":
+                switch{
+                case collide.Is("solid"):
 			break
-		case "entity":
+		case collide.Is("entity"):
 			e.Attack(collide)
-		case "space":
+		case collide.Is("space"):
                         e.p.x = x
                         e.p.y = y
                 }
@@ -46,7 +50,7 @@ func (e *entity) AI(collision map[pos]*entity) {
 	// check points along the line for sight blocking
 	sight := true
 	for i := 1; i < len(point)-1; i++ {
-		if collision[point[i]].f == "solid" {
+		if collision[point[i]].Is("solid") {
 			sight = false
 		}
 	}
@@ -57,3 +61,43 @@ func (e *entity) AI(collision map[pos]*entity) {
 		e.Move(vector, collision)
 	}
 }
+
+func (e *entity) Is(property string) bool{
+	tags := strings.Split(e.tags, ":")
+	for i := range(tags) {
+		if tags[i] == property {
+			return true
+		}
+	}
+	return false
+}
+
+func playerCheck(e entity) bool{
+	if e.Is("player") == false {
+		return false
+	}
+	return true
+}
+
+func playerInit(p pos) entity{
+	var player entity
+        player.ch = '@'
+        player.p = p
+        player.hp = 10
+        player.atk = 2
+        player.goal = pos{0,0}
+        player.tags = "entity:player"
+	return player
+}
+
+func xenoInit(p pos) entity{
+	var xeno entity
+	xeno.ch = 'x'
+	xeno.p = p
+	xeno.hp = 5
+	xeno.atk = 2
+	xeno.goal = pos{0,0}
+	xeno.tags = "entity:enemy"
+	return xeno
+}
+

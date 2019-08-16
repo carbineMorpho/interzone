@@ -8,7 +8,7 @@ const COLOR = termbox.ColorDefault
 const WORLDD = 128
 const SCREEND = 16
 
-func hpCheck(e []entity) []entity {
+func hpCheck(e []entity) []entity{
 // remove dead entities from memory
 
 	for i := 0; i < len(e); i++ {
@@ -20,17 +20,18 @@ func hpCheck(e []entity) []entity {
 	return e
 }
 
-func terrainInit() map[pos]entity {
+func terrainInit() []entity {
 // load static entities into memory
 	
-	terrain := make(map[pos]entity, WORLDD*WORLDD)
+	terrain := make([]entity, WORLDD*WORLDD)
 	i := 0
 
 	for y := 0; y < WORLDD; y++ {
 		for x := 0; x < WORLDD; x++ {
-			terrain[pos{x,y}] = entity{
+			terrain[i] = entity{
 				ch: '.',
-				f: 'space',
+				p: pos{x,y},
+				tags: "space",
 			}
 			i += 1
 		}
@@ -97,39 +98,23 @@ func main() {
 
 	// world init
 	terrain := terrainInit()
-	terrain = linePut(pos{10,20}, pos{60,90}, terrain)
 	
 	// entity init
 	creature := make([]entity, 1)
 
-	o := pos{9,9}
-	player := entity{
-		ch: '@',
-		p: o,
-		hp: 10,
-		atk: 3,
-		goal: o,
-		f: "entity",
-	}
-	creature[0] = player
+	creature[0] = playerInit(pos{8,8})
 	
-	xenomorph := entity{
-		ch: 'x',
-		p: o,
-		hp: 5,
-		atk: 1,
-		goal: o,
-		f: "entity",
-	}
 	for i := 1; i < 2; i++ {
-		xenomorph.p = pos{i,i}
-		creature = append(creature, xenomorph)
+		creature = append(creature, xenoInit(pos{i+10,i}))
 	}
 
 	// game loop
 	running := true
 	for running == true{
+
 		creature = hpCheck(creature)	
+		running = playerCheck(creature[0])
+
 		collision := collisionGet(terrain, creature)
 		monitor(creature[0].p, collision)
 
@@ -145,6 +130,9 @@ func main() {
 			creature[0].Move(pos{0, 1}, collision)
 		case 'd':
 			creature[0].Move(pos{1, 0}, collision)
+		case 'l':
+			linePut(pos{9,8}, pos{90,40}, collision)
+
 		}
 		for i := 1; i < len(creature); i++{
 			collision = collisionGet(terrain, creature)
