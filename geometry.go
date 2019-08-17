@@ -1,5 +1,10 @@
 package main
 
+import(
+	"time"
+	"math/rand"
+)
+
 type pos struct{
 	x int
 	y int
@@ -60,7 +65,57 @@ func line(start, end pos) (point []pos){
 func linePut(start, end pos, collision map[pos]*entity) {
 	point := line(start, end)
 	for i := range(point) {
-		collision[(point[i])].ch = '#'
-		collision[(point[i])].tags = "solid"
+		collision[(point[i])].p = point[i]
+		collision[(point[i])].ch = '.'
+		collision[(point[i])].tags = "space"
 	}
+}
+
+func square(start, end pos) (point []pos){
+	for y := start.y; y < end.y; y++ {
+		for x := start.x; x < end.x; x++ {
+			point = append(point, pos{x,y})
+		}
+	}
+	return
+}
+
+func squarePut(start, end pos, collision map[pos]*entity) {
+	point := square(start, end)
+	for i := range(point) {
+		collision[(point[i])].p = point[i]
+		collision[(point[i])].ch = '.'
+		collision[(point[i])].tags = "space"
+	}
+}
+
+func drunkGen() (terrain []entity) {
+
+	var air entity
+	air.ch = '.'
+	air.tags = "space"
+
+	walker := pos{32,32}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	direction := 0
+	for tiles := 600; tiles > 0; tiles -= 1 {
+		if r.Intn(2) == 1 {
+			direction = r.Intn(4)
+		}
+		switch direction{
+			case 0:
+				walker = pos{walker.x, walker.y -1}
+			case 1:
+                                walker = pos{walker.x -1, walker.y}
+			case 2:
+                                walker = pos{walker.x, walker.y +1}
+			case 3:
+                                walker = pos{walker.x +1, walker.y}
+		}
+		air.p = walker
+		terrain = append(terrain, air) 
+	}
+
+	return
 }

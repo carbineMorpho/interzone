@@ -97,16 +97,18 @@ func main() {
 	defer termbox.Close()
 
 	// world init
-	terrain := terrainInit()
+	terrain := drunkGen()
 	
 	// entity init
 	creature := make([]entity, 1)
 
-	creature[0] = playerInit(pos{8,8})
+	creature[0] = playerInit(pos{32,32})
 	
+/*
 	for i := 1; i < 2; i++ {
 		creature = append(creature, xenoInit(pos{i+10,i}))
 	}
+*/
 
 	// game loop
 	running := true
@@ -131,7 +133,7 @@ func main() {
 		case 'd':
 			creature[0].Move(pos{1, 0}, collision)
 		case 'l':
-			linePut(pos{9,8}, pos{90,40}, collision)
+			squarePut(pos{9,8}, pos{90,40}, collision)
 
 		}
 		for i := 1; i < len(creature); i++{
