@@ -62,13 +62,13 @@ func line(start, end pos) (point []pos){
         return
 }
 
-func linePut(start, end pos, collision map[pos]*entity) {
+func linePut(start, end pos, e entity, terrain map[pos]entity) map[pos]entity {
 	point := line(start, end)
 	for i := range(point) {
-		collision[(point[i])].p = point[i]
-		collision[(point[i])].ch = '.'
-		collision[(point[i])].tags = "space"
+		e.p = point[i]
+		terrain[point[i]] = e
 	}
+	return terrain
 }
 
 func square(start, end pos) (point []pos){
@@ -80,42 +80,87 @@ func square(start, end pos) (point []pos){
 	return
 }
 
-func squarePut(start, end pos, collision map[pos]*entity) {
+func squarePut(start, end pos, e entity, terrain map[pos]entity) map[pos]entity {
 	point := square(start, end)
 	for i := range(point) {
-		collision[(point[i])].p = point[i]
-		collision[(point[i])].ch = '.'
-		collision[(point[i])].tags = "space"
+		e.p = point[i]
+		terrain[e.p] = e
 	}
+	return terrain
 }
 
-func drunkGen() (terrain []entity) {
+func basicReflect(terrain []entity) []entity {
 
-	var air entity
-	air.ch = '.'
-	air.tags = "space"
+	// find point of reflection, mean of X coords	
+	x := 0
+	for _, e := range terrain {
+		x += e.p.x
+	}
+	x = x / len(terrain)
 
-	walker := pos{32,32}
+	// reflect the left side onto right
+	nextTerrain := make([]entity, len(terrain))
+	for _, left := range terrain {
+		right := left
+		if left.p.x < x {
+			right.p.x += 2*(x - right.p.x)
+			nextTerrain = append(nextTerrain, left)
+			nextTerrain = append(nextTerrain, right)
+		}
+	}
+	return nextTerrain
+}
+
+func basicGen(complexity int) []entity {
+
+	var tile entity
+	tile.ch = ' '
+	tile.fg = colorRandom()
+	tile.bg = colorRandom()
+	tile.tags = "solid"
+
+	terrainMap := make(map[pos]entity)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	direction := 0
-	for tiles := 600; tiles > 0; tiles -= 1 {
-		if r.Intn(2) == 1 {
-			direction = r.Intn(4)
-		}
-		switch direction{
-			case 0:
+	// drunk walk algorithm, weighted towards previous direction
+	walker := pos{0,0}
+	for complexity > 0 {
+		switch r.Intn(4) {
+			case 0: // up
 				walker = pos{walker.x, walker.y -1}
-			case 1:
+			case 1: // left
                                 walker = pos{walker.x -1, walker.y}
-			case 2:
+			case 2: // down
                                 walker = pos{walker.x, walker.y +1}
-			case 3:
+			case 3: // right
                                 walker = pos{walker.x +1, walker.y}
 		}
-		air.p = walker
-		terrain = append(terrain, air) 
+		tile.p = walker
+		terrainMap[walker] = tile
+		complexity -= 1
 	}
 
-	return
+	// draw square rooms randomly in map
+	for k := range terrainMap {
+		if r.Intn(10) == 1 {
+			c := terrainMap[k]
+			size := r.Intn(4)+2
+			terrainMap = squarePut(c.p, pos{c.p.x + size, c.p.y + size}, tile, terrainMap)
+		}
+	}
+
+	// turn map into slice
+	terrain := make([]entity, 0)
+	for k := range terrainMap {
+		terrain = append(terrain, terrainMap[k])
+	}
+
+	return terrain
+}
+
+func buildDemon(terrain []entity) []entity {
+
+	terrain = basicGen(300)
+	terrain = basicReflect(terrain)
+	return terrain
 }

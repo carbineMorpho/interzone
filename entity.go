@@ -1,11 +1,14 @@
 package main
 
 import(
+	"github.com/nsf/termbox-go"
 	"strings"
 )
 
 type entity struct{
         ch rune
+	fg termbox.Attribute
+	bg termbox.Attribute
         p pos
         hp int
         atk int
@@ -26,17 +29,15 @@ func (e *entity) Move(vector pos, collision map[pos]*entity) {
         x := e.p.x + vector.x
         y := e.p.y + vector.y
 
-        collide, prs := collision[pos{x,y}]
-        if prs != false {
-                switch{
-                case collide.Is("solid"):
-			break
-		case collide.Is("entity"):
-			e.Attack(collide)
-		case collide.Is("space"):
-                        e.p.x = x
-                        e.p.y = y
-                }
+	collide, prs := collision[pos{x,y}]
+	switch{
+        case prs == false:
+                e.p.x = x
+                e.p.y = y
+	case collide.Is("solid"):
+		break
+	case collide.Is("entity"):
+		e.Attack(collide)
         }
 
 }
@@ -50,7 +51,7 @@ func (e *entity) AI(collision map[pos]*entity) {
 	// check points along the line for sight blocking
 	sight := true
 	for i := 1; i < len(point)-1; i++ {
-		if collision[point[i]].Is("solid") {
+		if _, prs := collision[point[i]]; prs {
 			sight = false
 		}
 	}
@@ -82,6 +83,8 @@ func playerCheck(e entity) bool{
 func playerInit(p pos) entity{
 	var player entity
         player.ch = '@'
+	player.fg = termbox.ColorWhite
+	player.bg = termbox.ColorBlack
         player.p = p
         player.hp = 10
         player.atk = 2
@@ -93,6 +96,8 @@ func playerInit(p pos) entity{
 func xenoInit(p pos) entity{
 	var xeno entity
 	xeno.ch = 'x'
+	xeno.fg = termbox.ColorGreen
+	xeno.bg = termbox.ColorBlack
 	xeno.p = p
 	xeno.hp = 5
 	xeno.atk = 2
