@@ -2,9 +2,10 @@
 
 A simple roguelike game I am writing to learn Go
 
+# unique features
+* rorschack tests
+
 # todo
-* coloured terminal graphics
-* drunken room placer dungeon generation
-* directional line of sight
-* guns/missiles
+* combat/items
+* terrain manipulation
 

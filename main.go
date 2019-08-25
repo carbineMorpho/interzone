@@ -2,83 +2,116 @@ package main
 
 import "github.com/nsf/termbox-go"
 
-func hpCheck(e []entity) []entity{
-// remove dead entities from memory
+const SCREEND = 28
 
+// scrolling camera
+func (w *world) Monitor() {
+
+	var camera pos
+	camera.X = w.player.p.X - (SCREEND/2)
+	camera.Y = w.player.p.Y - (SCREEND/2)
+
+	for y := 0; y < SCREEND; y++ {
+		for x := 0; x < SCREEND; x++ {
+			t := w.Get(pos{camera.X +x, camera.Y +y})
+			termbox.SetCell(x, y, t.ch, t.fg, t.bg)
+		}
+	}
+
+	for _, e := range w.creature {
+		if (e.p.X > camera.X && e.p.X < camera.X + SCREEND) && (e.p.Y > camera.Y && e.p.Y < camera.Y + SCREEND){
+			termbox.SetCell(e.p.X - camera.X, e.p.Y - camera.Y, e.ch, termbox.ColorWhite, termbox.ColorBlack)
+		}
+	}
+
+	termbox.SetCell(w.player.p.X - camera.X, w.player.p.Y - camera.Y, w.player.ch, termbox.ColorWhite, termbox.ColorBlack)
+
+	termbox.Flush()
+}
+
+// remove dead entities from memory
+func hpCheck(e []entity) []entity {
 	for i := 0; i < len(e); i++ {
-		if e[i].hp <= 0 {
+		if deathCheck(e[i]) == true {
 			e[i] = e[len(e)-1]
-			e = e[:len(e)-1] 
+			e = e[:len(e)-1]
 		}
 	}
 	return e
 }
 
-func collisionGet(e []entity, collision map[pos]*entity) (map[pos]*entity){
-	for i := range(e) {
-		collision[e[i].p] = &e[i]
+func deathCheck(e entity) bool {
+	if e.hp <= 0 {
+		return true
 	}
-	return collision
+	return false
 }
 
-func collisionGetAll(terrain []entity, creature []entity) (map[pos]*entity){
-// data structure for potential collisions
+func errorCheck(err error) {
 
-	collision := make(map[pos]*entity)
-	collision = collisionGet(terrain, collision)
-	collision = collisionGet(creature, collision)
-	return collision
+	if err != nil {
+		panic(err)
+	}
 }
 
-func main() {
-	
+// moves towards target if in sight
+func (e *entity) AI(target pos, w world) {
+	point := line(e.p, target)
+	see := true	
+
+	for i := 1; i < len(point); i++ {
+		if w.Get(point[i]).ch == '#' {
+			see = false
+		}
+	}
+
+	if see && len(point) > 2{
+		log("%+v", point)
+		e.Move(point[1], w)
+	}
+}
+
+func main(){
+
 	// termbox init
 	err := termbox.Init()
 	errorCheck(err)
 	defer termbox.Close()
 
 	// world init
-	terrain := make([]entity, 1)
-	terrain = buildDemon(terrain)
-	terrain = basicReflect(terrain)
-	
+	var w world
+	w.Init(100,100)
+
 	// entity init
-	creature := make([]entity, 1)
+	w.player = playerInit(8,8)
+	w.creature = append(w.creature, xeno(2,2))
+	w.creature = append(w.creature, xeno(8,3))
 
-	creature[0] = playerInit(pos{0,0})
-	
-	for i := 1; i < 2; i++ {
-		creature = append(creature, xenoInit(pos{i+10,i}))
-	}
-
-	// game loop
+	// main game loop
 	running := true
-	for running == true{
-
-		creature = hpCheck(creature)	
-		running = playerCheck(creature[0])
-
-		collision := collisionGetAll(terrain, creature)
-		monitor(creature[0].p, collision)
-
-		input := termbox.PollEvent().Ch
-		switch input {
+	for running {
+		w.creature = hpCheck(w.creature)
+		running = !deathCheck(w.player)
+		w.Monitor()
+		
+		switch termbox.PollEvent().Ch {
+		case 'w':
+			w.player.Move(w.player.p.UP(), w)		
+		case 'a':
+			w.player.Move(w.player.p.LEFT(), w)
+		case 's':
+			w.player.Move(w.player.p.DOWN(), w)
+		case 'd':
+			w.player.Move(w.player.p.RIGHT(), w)
+		case 'l':
+			w.Build(rorschach(w.player.p))
 		case '0':
 			running = false
-		case 'w':
-			creature[0].Move(pos{0,-1}, collision)
-		case 'a':
-			creature[0].Move(pos{-1,0}, collision)
-		case 's':
-			creature[0].Move(pos{0, 1}, collision)
-		case 'd':
-			creature[0].Move(pos{1, 0}, collision)
 		}
-		for i := 1; i < len(creature); i++{
-			collision = collisionGetAll(terrain, creature)
-			creature[i].goal = creature[0].p
-			creature[i].AI(collision)
+		
+		for i := 0; i < len(w.creature); i++ {
+			w.creature[i].AI(w.player.p, w)
 		}
-	}
 	// end of game loop
+	}
 }
