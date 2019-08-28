@@ -1,25 +1,49 @@
 package main
 
-import "github.com/nsf/termbox-go"
+import (
+	"github.com/nsf/termbox-go"
+	"time"
+	"math/rand"
+)
 
-const SCREEND = 28
+const SCREENX = 35
+const SCREENY = 25
+
+// return a random seed 
+func seedInit() *rand.Rand {
+	return rand.New(rand.NewSource(time.Now().UnixNano()))
+}
+
+// return a random color
+func colorRandom() (color termbox.Attribute) {
+	r := seedInit()
+	switch r.Intn(3) {
+	case 0:
+		color = termbox.ColorYellow
+	case 1:
+		color = termbox.ColorCyan
+	case 2:
+		color = termbox.ColorRed
+	}
+	return
+}
 
 // scrolling camera
 func (w *world) Monitor() {
 
 	var camera pos
-	camera.X = w.player.p.X - (SCREEND/2)
-	camera.Y = w.player.p.Y - (SCREEND/2)
+	camera.X = w.player.p.X - (SCREENX/2)
+	camera.Y = w.player.p.Y - (SCREENY/2)
 
-	for y := 0; y < SCREEND; y++ {
-		for x := 0; x < SCREEND; x++ {
+	for y := 0; y < SCREENY; y++ {
+		for x := 0; x < SCREENX; x++ {
 			t := w.Get(pos{camera.X +x, camera.Y +y})
 			termbox.SetCell(x, y, t.ch, t.fg, t.bg)
 		}
 	}
 
 	for _, e := range w.creature {
-		if (e.p.X > camera.X && e.p.X < camera.X + SCREEND) && (e.p.Y > camera.Y && e.p.Y < camera.Y + SCREEND){
+		if (e.p.X > camera.X && e.p.X < camera.X + SCREENX) && (e.p.Y > camera.Y && e.p.Y < camera.Y + SCREENY){
 			termbox.SetCell(e.p.X - camera.X, e.p.Y - camera.Y, e.ch, termbox.ColorWhite, termbox.ColorBlack)
 		}
 	}
@@ -33,6 +57,7 @@ func (w *world) Monitor() {
 func hpCheck(e []entity) []entity {
 	for i := 0; i < len(e); i++ {
 		if deathCheck(e[i]) == true {
+			log("%c died", e[i].ch)
 			e[i] = e[len(e)-1]
 			e = e[:len(e)-1]
 		}
@@ -54,10 +79,10 @@ func errorCheck(err error) {
 	}
 }
 
-// moves towards target if in sight
-func (e *entity) AI(target pos, w world) {
+// moves towards goal if in sight
+func (e *entity) Hunt(target pos, w world) {
 	point := line(e.p, target)
-	see := true	
+	see := true
 
 	for i := 1; i < len(point); i++ {
 		if w.Get(point[i]).ch == '#' {
@@ -66,7 +91,6 @@ func (e *entity) AI(target pos, w world) {
 	}
 
 	if see && len(point) > 2{
-		log("%+v", point)
 		e.Move(point[1], w)
 	}
 }
@@ -104,13 +128,13 @@ func main(){
 		case 'd':
 			w.player.Move(w.player.p.RIGHT(), w)
 		case 'l':
-			w.Build(rorschach(w.player.p))
+			w.Build(house(w.player.p, pos{40, 40}), colorRandom())
 		case '0':
 			running = false
 		}
 		
 		for i := 0; i < len(w.creature); i++ {
-			w.creature[i].AI(w.player.p, w)
+			w.creature[i].Hunt(w.player.p, w)
 		}
 	// end of game loop
 	}

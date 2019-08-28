@@ -47,11 +47,11 @@ func (w *world) CollideCheck(p pos) (*entity, bool){
 }
 
 // places an array of points onto terrain
-func (w *world) Build(point []pos) {
+func (w *world) Build(point []pos, color termbox.Attribute) {
 	var block tile
 	block.ch = '#'
-	block.fg = termbox.ColorRed
-	block.bg = termbox.ColorRed
+	block.fg = color
+	block.bg = color
 
 	for i := range point {
 		w.Put(point[i], block)

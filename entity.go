@@ -7,7 +7,7 @@ type entity struct {
 }
 
 func (e *entity) Attack(victim *entity) {
-	log("%c hp: %d", victim.ch, victim.hp)
+	log("%c attacked %c for %d", e.ch, victim.ch, 1)
 	victim.hp -= 1
 }
 
