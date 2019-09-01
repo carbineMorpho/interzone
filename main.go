@@ -14,45 +14,6 @@ func seedInit() *rand.Rand {
 	return rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-// return a random color
-func colorRandom() (color termbox.Attribute) {
-	r := seedInit()
-	switch r.Intn(3) {
-	case 0:
-		color = termbox.ColorYellow
-	case 1:
-		color = termbox.ColorCyan
-	case 2:
-		color = termbox.ColorRed
-	}
-	return
-}
-
-// scrolling camera
-func (w *world) Monitor() {
-
-	var camera pos
-	camera.X = w.player.p.X - (SCREENX/2)
-	camera.Y = w.player.p.Y - (SCREENY/2)
-
-	for y := 0; y < SCREENY; y++ {
-		for x := 0; x < SCREENX; x++ {
-			t := w.Get(pos{camera.X +x, camera.Y +y})
-			termbox.SetCell(x, y, t.ch, t.fg, t.bg)
-		}
-	}
-
-	for _, e := range w.creature {
-		if (e.p.X > camera.X && e.p.X < camera.X + SCREENX) && (e.p.Y > camera.Y && e.p.Y < camera.Y + SCREENY){
-			termbox.SetCell(e.p.X - camera.X, e.p.Y - camera.Y, e.ch, termbox.ColorWhite, termbox.ColorBlack)
-		}
-	}
-
-	termbox.SetCell(w.player.p.X - camera.X, w.player.p.Y - camera.Y, w.player.ch, termbox.ColorWhite, termbox.ColorBlack)
-
-	termbox.Flush()
-}
-
 // remove dead entities from memory
 func hpCheck(e []entity) []entity {
 	for i := 0; i < len(e); i++ {
@@ -65,6 +26,7 @@ func hpCheck(e []entity) []entity {
 	return e
 }
 
+// check if an entity is dead
 func deathCheck(e entity) bool {
 	if e.hp <= 0 {
 		return true
@@ -116,8 +78,7 @@ func main(){
 	for running {
 		w.creature = hpCheck(w.creature)
 		running = !deathCheck(w.player)
-		w.Monitor()
-		
+		w.Monitor() 
 		switch termbox.PollEvent().Ch {
 		case 'w':
 			w.player.Move(w.player.p.UP(), w)		
@@ -128,8 +89,18 @@ func main(){
 		case 'd':
 			w.player.Move(w.player.p.RIGHT(), w)
 		case 'l':
-			w.Build(house(w.player.p, pos{40, 40}), colorRandom())
-		case '0':
+			w.Build(line(w.player.p, pos{40,40}), colorRandom())
+		case 'g':
+			w.player.PickUp(w)
+		case 'j':
+			if i, prs := inventory(w, &w.player); prs{
+				w.prop[i].PosSet(w.player.p)
+			}
+		case 'u':
+			if i, prs := inventory(w, &w.player); prs{
+				w.prop[i].f(&w, w.player.p)
+			}
+		case 'X':
 			running = false
 		}
 		

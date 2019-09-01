@@ -21,6 +21,7 @@ func (p *pos) RIGHT() pos {
 	return pos{p.X+1, p.Y}
 }
 
+// return a random direction
 func (p pos) Random() pos {
 	r := seedInit()
 	switch r.Intn(4) {
@@ -45,14 +46,17 @@ func abs(n int) int{
 	return n
 }
 
+// linear interpolation
 func lerp(start, end int, t float64) int{
 	return int(float64(start) + t * float64(end-start))
 }
 
+// lerp between two positions
 func lerpPos(start, end pos, t float64) pos{
 	return pos{lerp(start.X, end.X, t), lerp(start.Y, end.Y, t)}
 }
 
+// create a line through lerp
 func line(start, end pos) (point []pos){
 	deltaX := abs(end.X - start.X)
 	deltaY := abs(end.Y - start.Y)
@@ -69,57 +73,7 @@ func line(start, end pos) (point []pos){
 	return
 }
 
-// bresenham line drawing
-func line2(start, end pos) (point []pos) {
-	
-	// prepare for steep lines
-	steep := abs(end.Y - start.Y) > abs(end.X - start.X)
-	if steep {
-		start.X, start.Y = start.Y, start.X
-		end.X, end.Y = end.Y, end.X
-	}
-	
-	// prepare for lines travelling left
-	reverse := false
-	if start.X > end.X {
-		start.X, end.X = end.X, start.X
-		start.Y, end.Y = end.Y, start.Y
-		reverse = true
-	}
-
-	// prepare for lines with negative gradient
-	neg := -1
-	if start.Y < end.Y {
-		neg = 1
-	}
-
-	deltaX := start.Y
-	deltaY := abs(end.Y - start.Y)
-	err := deltaX / 2
-
-	y := start.Y
-	for x:= start.X; x <= end.X; x++ {
-		if steep {
-			point = append(point, pos{y, x})
-		} else {
-			point = append(point, pos{x, y})
-		}
-		err -= deltaY
-		if err < 0 {
-			y+= neg
-			err += deltaX
-		}
-	}
-
-	if reverse {
-		for i, j := 0, len(point)-1; i < j; i, j = i+1, j-1 {
-			point[i], point[j] = point[j], point[i]
-		}
-	}
-
-	return
-}
-
+// random walker algorithm
 func drunkGen(p pos, size int) (point []pos) {
 	for size > 0 {
 		p = p.Random()
@@ -139,10 +93,10 @@ func reflect(point []pos) (new []pos) {
 	X  = X / len(point)
 
 	// reflect shape
-	for _, left :=  range point {
-		right := left
-		if left.X <= X {
-			right.X += 2*(X - right.X)
+	for _, right :=  range point {
+		left := right
+		if right.X > X {
+			left.X += 2*(X - right.X)
 			new = append(new, left)
 			new = append(new, right)
 		}
@@ -150,6 +104,7 @@ func reflect(point []pos) (new []pos) {
 	return
 }
 
+// randomly generated rorschach test
 func rorschach(p pos) (point []pos) {
 	point = drunkGen(p, 200)
 	point = reflect(point)
@@ -199,6 +154,8 @@ func merge(a, b []pos) []pos {
 	return a
 }
 
+
+// creates a structure through binary space partitioning
 func house(start, end pos) (point []pos) {
 
 	// initial room

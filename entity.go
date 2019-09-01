@@ -11,6 +11,13 @@ func (e *entity) Attack(victim *entity) {
 	victim.hp -= 1
 }
 
+func (e *entity) PickUp(w world) {
+	t, prs := w.PropCheck(e.p)
+	if prs {
+		t.PosSet(e)
+	}
+}
+
 func (e *entity) Move(p pos, w world) {
 
 	tCollide := w.Get(p)

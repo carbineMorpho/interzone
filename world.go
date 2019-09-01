@@ -13,6 +13,7 @@ type world struct {
 	terrain []*tile
 	player entity
 	creature []entity
+	prop []tool
 }
 
 // put a tile on the map. overwrites and handles bounds
@@ -46,6 +47,31 @@ func (w *world) CollideCheck(p pos) (*entity, bool){
 	return nil, false
 }
 
+// returns a prop at pos(world map) or entity(inventory)
+func (w *world) PropCheck(p interface{}) (*tool, bool){
+	for i := range w.prop {
+		if w.prop[i].i == p {
+			return &w.prop[i], true
+		}
+	}
+	return &w.prop[0], false
+}
+
+
+// return a random color
+func colorRandom() (color termbox.Attribute) {
+	r := seedInit()
+	switch r.Intn(3) {
+	case 0:
+		color = termbox.ColorYellow
+	case 1:
+		color = termbox.ColorCyan
+	case 2:
+		color = termbox.ColorRed
+	}
+	return
+}
+
 // places an array of points onto terrain
 func (w *world) Build(point []pos, color termbox.Attribute) {
 	var block tile
@@ -68,5 +94,16 @@ func (w *world) Init(width, height int) {
 	for i := 0; i < width*height; i++ {
 		w.terrain = append(w.terrain, &air)
 	}
-	
+
+	var t tool
+
+	t.name = "Demon"
+	t.i = pos{2,2}
+	t.f = t.Demon
+ 	w.prop = append(w.prop, t )	
+
+	t.name = "Base"
+	t.i = pos{10,3}
+	t.f = t.Base
+	w.prop = append(w.prop, t )
 }
