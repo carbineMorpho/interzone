@@ -21,9 +21,9 @@ func (e *entity) PickUp(w world) {
 func (e *entity) Move(p pos, w world) {
 
 	tCollide := w.Get(p)
-	collide, prs := w.CollideCheck(p)
+	collide := w.CollideCheck(p)
 	switch {
-		case prs:
+		case collide != nil:
 			e.Attack(collide)
 		case tCollide.ch == '#':
 			break
@@ -32,11 +32,20 @@ func (e *entity) Move(p pos, w world) {
 	}
 }
 
+// moves towards goal if in sight
+func (e *entity) Hunt(w world) {
+	point := line(e.p, w.player.p)
+	if w.See(e.p, w.player.p) && len(point) > 2{
+		e.Move(point[1], w)
+	}
+}
+
+
 func playerInit(x, y int) entity{
 	var player entity
+	player.ch = '@'
 	player.p.X = x
 	player.p.Y = y
-	player.ch = '@'
 	player.hp = 10
 
 	return player
@@ -44,9 +53,9 @@ func playerInit(x, y int) entity{
 
 func xeno(x, y int) entity{
 	var xeno entity
+	xeno.ch = 'x'
 	xeno.p.X = x
 	xeno.p.Y = y
-	xeno.ch = 'x'
 	xeno.hp = 2
 	
 	return xeno

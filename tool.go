@@ -1,6 +1,7 @@
+
 package main
 
-type toolf func(w *world, p pos)
+type toolf func()
 
 type tool struct {
 	name string
@@ -8,12 +9,23 @@ type tool struct {
 	f toolf
 }
 
-func (t *tool) Demon(w *world, p pos){
-	w.Build(rorschach(p), colorRandom())
+func (w *world) Gun(){
+	w.Monitor("Click Target")
+
+	if p, prs := mouseGet(); prs{
+
+		p.X += w.player.p.X
+		p.Y += w.player.p.Y
+
+		if e := w.CollideCheck(p); e != nil{
+			log("bang!")
+			e.hp -= 1
+		}
+	}	
 }
 
-func (t *tool) Base(w *world, p pos){
-	w.Build(house(p, pos{p.X+24, p.Y+12}), colorRandom())
+func (w *world) Shoes(){
+	w.player.p.Y += 1
 }
 
 func (t *tool) PosSet(i interface{}) {

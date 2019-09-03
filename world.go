@@ -36,15 +36,15 @@ func (w *world) Get(p pos) tile {
 }
 
 // checks for entity at given point
-func (w *world) CollideCheck(p pos) (*entity, bool){
+func (w *world) CollideCheck(p pos) (*entity){
 	
 	for i := range w.creature {
 		e := &w.creature[i]
 		if p.X == e.p.X && p.Y == e.p.Y {
-			return e, true
+			return e
 		}
 	}
-	return nil, false
+	return nil
 }
 
 // returns a prop at pos(world map) or entity(inventory)
@@ -58,6 +58,18 @@ func (w *world) PropCheck(p interface{}) (*tool, bool){
 }
 
 
+// tests if two positions are in sight
+func (w *world) See(start, end pos) bool{
+	point := line(start, end)
+	for i := 1; i < len(point); i++ {
+		t := w.Get(point[i])
+		if t.ch == '#' {
+			return false
+		}
+	}
+	return true
+}
+
 // return a random color
 func colorRandom() (color termbox.Attribute) {
 	r := seedInit()
@@ -70,6 +82,31 @@ func colorRandom() (color termbox.Attribute) {
 		color = termbox.ColorRed
 	}
 	return
+}
+
+// returns a random structure from geometry.go
+func buildRandom(p pos) ([]pos, termbox.Attribute){
+	r := seedInit()
+
+	switch r.Intn(3){
+	case 0:
+		return rorschach(p), termbox.ColorRed
+	case 1:
+		return house(p, pos{p.X+24, p.Y+12}), termbox.ColorYellow
+	case 2:
+		return reflect(house(p, pos{p.X+24, p.Y+12})), termbox.ColorWhite
+	}
+	return nil, termbox.ColorBlack
+}
+
+// checks if building site is clear
+func (w *world) Ground(point []pos) bool{
+	for i := range point {
+		if w.Get(point[i]).ch == '#' {
+			return false
+		}
+	}
+	return true
 }
 
 // places an array of points onto terrain
@@ -95,15 +132,27 @@ func (w *world) Init(width, height int) {
 		w.terrain = append(w.terrain, &air)
 	}
 
+
 	var t tool
 
-	t.name = "Demon"
+	t.name = "357 Revolver"
 	t.i = pos{2,2}
-	t.f = t.Demon
- 	w.prop = append(w.prop, t )	
+	t.f = w.Gun
+	w.prop = append(w.prop, t)
 
-	t.name = "Base"
+	t.name = "Geobaskets"
 	t.i = pos{10,3}
-	t.f = t.Base
-	w.prop = append(w.prop, t )
+	t.f = w.Shoes
+	w.prop = append(w.prop, t)
+
+	r := seedInit()
+	i := 10
+	for i > 0 {
+		B, color := buildRandom(pos{r.Intn(width), r.Intn(height)})
+		if w.Ground(B) == true {
+ 			w.Build(B, color)
+			i -= 1
+		}
+	}
+		
 }

@@ -17,7 +17,7 @@ func log(msg string, a ...interface{}) {
 }
 
 // scrolling camera
-func (w *world) Monitor() {
+func (w *world) Monitor(msg string) {
 
 	var camera pos
 	camera.X = w.player.p.X - (SCREENX/2)
@@ -56,7 +56,7 @@ func (w *world) Monitor() {
 	// info
 	menu := SCREENY+1
 	menu += menuInfo(menu, "INTERZONE")
-	menu += menuInfo(menu, "controls: (g)et (j)rop (u)se wasd/move X/quit")
+	menu += menuInfo(menu, msg)
 
 	termbox.Flush()
 	termbox.Clear(termbox.ColorBlack, termbox.ColorBlack)

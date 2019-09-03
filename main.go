@@ -41,20 +41,12 @@ func errorCheck(err error) {
 	}
 }
 
-// moves towards goal if in sight
-func (e *entity) Hunt(target pos, w world) {
-	point := line(e.p, target)
-	see := true
-
-	for i := 1; i < len(point); i++ {
-		if w.Get(point[i]).ch == '#' {
-			see = false
-		}
+// returns position relative to player
+func mouseGet() (pos, bool){
+	if ev := termbox.PollEvent(); ev.Key == termbox.MouseLeft {
+		return pos{ev.MouseX -17, ev.MouseY -12}, true
 	}
-
-	if see && len(point) > 2{
-		e.Move(point[1], w)
-	}
+	return pos{0,0}, false
 }
 
 func main(){
@@ -63,6 +55,8 @@ func main(){
 	err := termbox.Init()
 	errorCheck(err)
 	defer termbox.Close()
+
+	termbox.SetInputMode(termbox.InputEsc | termbox.InputMouse)
 
 	// world init
 	var w world
@@ -78,7 +72,7 @@ func main(){
 	for running {
 		w.creature = hpCheck(w.creature)
 		running = !deathCheck(w.player)
-		w.Monitor() 
+		w.Monitor("controls: (g)et (j)rop (u)se wasd/move X/quit") 
 		switch termbox.PollEvent().Ch {
 		case 'w':
 			w.player.Move(w.player.p.UP(), w)		
@@ -98,14 +92,14 @@ func main(){
 			}
 		case 'u':
 			if i, prs := inventory(w, &w.player); prs{
-				w.prop[i].f(&w, w.player.p)
+				w.prop[i].f()
 			}
 		case 'X':
 			running = false
 		}
 		
 		for i := 0; i < len(w.creature); i++ {
-			w.creature[i].Hunt(w.player.p, w)
+			w.creature[i].Hunt(w)
 		}
 	// end of game loop
 	}

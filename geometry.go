@@ -178,3 +178,4 @@ func house(start, end pos) (point []pos) {
 	}
 	return dig(positive, negative)
 }
+
